@@ -201,11 +201,7 @@
 		 * Prepare language list
 		 */
 		prepareLanguageList: function () {
-<<<<<<< HEAD
-			var imeselector = this, languageCodeIndex = 0, $languageListDiv, $languageList, languageList;
-=======
 			var languageCodeIndex = 0, $languageListDiv, $languageList, languageList;
->>>>>>> wikimedia/master
 
 			// Language list can be very long. So we use a container with
 			// overflow auto.
@@ -217,14 +213,6 @@
 			} else {
 				languageList = this.options.languages;
 			}
-<<<<<<< HEAD
-
-			for( languageCodeIndex in languageList ) {
-				var $languageItem, $language, languageCode, language;
-
-				languageCode = languageList[languageCodeIndex];
-				language = $.ime.languages[languageCode];
-=======
 
 			for( languageCodeIndex in languageList ) {
 				var $languageItem, $language, languageCode, language;
@@ -235,7 +223,6 @@
 				if ( !language ) {
 					continue;
 				}
->>>>>>> wikimedia/master
 
 				$languageItem = $( '<a>' ).attr( 'href', '#' ).text( language.autonym );
 				$language = $( '<li class="ime-lang">' ).attr( 'lang', languageCode );
@@ -244,17 +231,10 @@
 			}
 
 			$languageListDiv.append( $languageList );
-<<<<<<< HEAD
-			imeselector.$menu.append( $languageListDiv );
-
-			if ( this.options.languageSelector ) {
-				imeselector.$menu.append( this.options.languageSelector() );
-=======
 			this.$menu.append( $languageListDiv );
 
 			if ( this.options.languageSelector ) {
 				this.$menu.append( this.options.languageSelector() );
->>>>>>> wikimedia/master
 			}
 		},
 
