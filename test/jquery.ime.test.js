@@ -19,9 +19,9 @@
 
 		$input.ime();
 		inputIME = $input.data( 'ime' );
-		assert.strictEqual( inputIME.active, false, 'ime is initially inactive' );
+		assert.strictEqual( inputIME.isActive(), false, 'ime is initially inactive' );
 		assert.strictEqual( inputIME.context, '', 'context is initially empty' );
-		assert.strictEqual( inputIME.inputmethod, null, 'inputmethod is initially null' );
+		assert.strictEqual( inputIME.getIM(), null, 'inputmethod is initially null' );
 		assert.strictEqual( inputIME.options.imePath, '../', 'imePath is "../" by default' );
 
 		var $specialPath = $( '<textarea>' ),
@@ -31,14 +31,73 @@
 							'imePath is defined correctly using options in the constructor' );
 	} );
 
-	QUnit.test( 'Selector tests', 3, function ( assert ) {
+	QUnit.test( 'Selector tests', 12, function ( assert ) {
 		$textarea.ime();
 		textareaIME = $textarea.data( 'ime' );
 		var selector = textareaIME.selector.data( 'imeselector' );
 		assert.strictEqual( typeof selector, 'object', 'selector on textarea is defined' );
 
-		assert.strictEqual( selector.active, false, 'selector is not active initially' );
-		assert.strictEqual( selector.inputmethod, null, 'inputmethod is not enabled initially' );
+		assert.strictEqual( textareaIME.isActive(), false, 'selector is not active initially' );
+		assert.strictEqual( textareaIME.getIM(), null, 'inputmethod is not enabled initially' );
+
+		textareaIME.enable();
+		assert.strictEqual( textareaIME.isActive(), true, 'selector is active' );
+		stop();
+		textareaIME.load( 'hi-transliteration', function () {
+			selector.selectLanguage( 'hi' );
+			// selector.selectIM( 'hi-transliteration' );
+			assert.strictEqual( textareaIME.getIM().id, 'hi-transliteration',
+				'Hindi inputmethod is Hindi Transliteration' );
+			start();
+		} );
+		selector.disableIM();
+		assert.strictEqual( textareaIME.isActive(), false, 'selector is not active' );
+		stop();
+		textareaIME.load( 'ta-transliteration', function () {
+			selector.selectLanguage( 'ta' );
+			assert.strictEqual( textareaIME.getIM().id, 'ta-transliteration',
+				'Tamil inputmethod is defaulted to Tamil Transliteration' );
+			start();
+		} );
+		stop();
+		textareaIME.load( 'ta-bamini', function () {
+			selector.selectLanguage( 'ta' );
+			selector.selectIM( 'ta-bamini' );
+			assert.strictEqual( textareaIME.getIM().id, 'ta-bamini',
+				'Tamil inputmethod is changed to Tamil Bamini' );
+			start();
+		} );
+		selector.disableIM();
+		assert.strictEqual( textareaIME.isActive(), false, 'Selector is not active' );
+		stop();
+		textareaIME.load( 'kn-transliteration', function () {
+			selector.selectLanguage( 'kn' );
+			// selector.selectIM( 'kn-transliteration' ); Implicit
+			assert.strictEqual( textareaIME.getIM().id, 'kn-transliteration',
+				'Default inputmethod for Kannada is Kannada Transliteration' );
+			start();
+		} );
+		stop();
+		textareaIME.load( 'hi-transliteration', function () {
+			selector.selectLanguage( 'hi' );
+			textareaIME.enable();
+			assert.strictEqual( textareaIME.getIM().id, 'hi-transliteration',
+				'inputmethod is Hindi Transliteration' );
+			selector.selectLanguage( 'ta' );
+			assert.strictEqual( textareaIME.getIM().id, 'ta-bamini',
+				'inputmethod for Tamil is Tamil Bamini' );
+			start();
+		} );
+
+	} );
+
+	QUnit.test( 'Preferences tests', 2, function ( assert ) {
+		$.ime.preferences.registry.previousLanguages = [];
+		$.ime.preferences.setLanguage( 'hi' );
+		assert.strictEqual( $.ime.preferences.getPreviousLanguages().length, 1, 'Hindi added to previous languages' );
+		// set it again
+		$.ime.preferences.setLanguage( 'hi' );
+		assert.strictEqual( $.ime.preferences.getPreviousLanguages().length, 1, 'Hindi not duplicated in previous languages' );
 	} );
 
 	QUnit.module( 'jquery.ime - input method rules tests', {
@@ -315,6 +374,283 @@
 		$input: $( '<input>' ).attr( {id: 'kn', type: 'text' } )
 	} );
 
+<<<<<<< HEAD
+	QUnit.module( 'jquery.ime - input method rules tests', {
+		setup: function () {
+			$textarea = $( '<textarea>' );
+			$input = $( '<input>' );
+		},
+		teardown: function () {
+		}
+	} );
+
+
+	/* T
+	 * ry for imeTest
+	 */
+	var imeTest = function( options ) {
+		var opt = $.extend( {
+			description: '', // Test description
+			$input: null,
+			tests: [],
+			inputmethod: '' // The input method name.
+		}, options );
+
+		test( opt.description, function() {
+			var ime, $input;
+
+			expect( opt.tests.length );
+			$input = opt.$input;
+			stop();
+
+			$input.appendTo( '#qunit-fixture' );
+			$input.ime();
+			$input.focus();
+
+			ime = $input.data( 'ime' );
+			ime.load( opt.inputmethod, function () {
+				ime.setIM( opt.inputmethod );
+				ime.enable();
+				for ( var i = 0 ; i < opt.tests.length; i++ ) {
+					// Simulate pressing keys for each of the sample characters
+					typeChars( $input, opt.tests[i].input );
+					equal( $input.val() || $input.text(), opt.tests[i].output, opt.tests[i].description );
+					$input.val( '' );
+					$input.text( '' );
+				}
+				start();
+			} );
+		} );
+	};
+
+	imeTest( {
+		description: 'Malayalam Transliteration test',
+		tests: [
+			{ input: '\\~', output: '~', description: 'Malayalam transliteration - \\~ -> ~' },
+			{ input: 'a', output: 'അ', description: 'Malayalam a' },
+			{ input: 'ra', output: 'ര', description: 'Malayalam ra' },
+			{ input: 'p', output: 'പ്', description: 'Malayalam p' },
+			{ input: 'kh', output: 'ഖ്', description: 'Malayalam kh' },
+			{ input: 'nch', output: 'ഞ്ച്', description: 'Malayalam nch' },
+			{ input: 'au', output: 'ഔ', description: 'Malayalam au' },
+			{ input: 'maU', output: 'മൌ', description: 'Malayalam aU' },
+			{ input: 'kshau', output: 'ക്ഷൗ', description: 'Malayalam kshau' },
+			{ input: 'ram', output: 'രം', description: 'Malayalam ram' },
+			{ input: 'rama', output: 'രമ', description: 'Malayalam rama' },
+			{ input: 'baH', output: 'ബഃ', description: 'baH' },
+			{ input: 'bah', output: 'ബഹ്', description: 'bah' },
+			{ input: 'ai', output: 'ഐ', description: 'ai' },
+			{ input: 'lai', output: 'ലൈ', description: 'lai' },
+			{ input: 'nta', output: 'ന്റ', description: 'Malayalam nta' }
+		],
+		inputmethod: 'ml-transliteration',
+		$input: $( '<input>' ).attr( { id: 'ml', type: 'text' } )
+	} );
+
+	imeTest( {
+		description: 'Telugu Transliteration test',
+		tests: [
+			{ input: 'c', output: 'చ్', description: 'Telugu c' },
+			{ input: 'ch', output: 'చ్', description: 'Telugu ch' }
+		],
+		inputmethod: 'te-transliteration',
+		$input: $( '<input>' ).attr( { id: 'te', type: 'text' } )
+	} );
+
+	imeTest( {
+		description: 'Telugu InScript test',
+		tests: [
+			{ input: 'k-', output: 'కః', description: 'Telugu k- (visarga)' },
+			{ input: '}', output: 'ఞ', description: 'Telugu } (nya)' },
+			{ input: 'J', output: 'ఱ', description: 'Telugu J (rra)' },
+			{ input: '/', output: 'య', description: 'Telugu / (ya)' },
+			{ input: 'pz', output: 'జె', description: 'Telugu pz (je)' },
+			{ input: 'p`', output: 'జొ', description: 'Telugu p` (jo)' },
+			{ input: 'kX', output: 'కఁ', description: 'Telugu kX (ka@m, candrabindu)' },
+			{ input: 'hx', output: 'పం', description: 'Telugu hx (paM, anusvara)' },
+			{ input: '>', output: '।', description: 'Telugu > (danda)' },
+			{ input: [ [ ';', true ] ], output: 'ౘ', description: 'Telugu Alt ; (tsa)'},
+			{ input: [ [ 'p', true ] ], output: 'ౙ', description: 'Telugu Alt p (dza)'},
+			{ input: [ [ '4', true ] ], output: '₹', description: 'Alt 4; (rupee sign)'},
+			{ input: [ [ '=', true ] ], output: 'ౄ', description: 'Telugu Alt = (RRuu, vowel)'},
+			{ input: [ [ '+', true ] ], output: 'ౠ', description: 'Telugu Alt + (RRuu)'}
+		],
+		inputmethod: 'te-inscript',
+		$input: $( '<input>' ).attr( { id: 'te-inscript', type: 'text' } )
+	} );
+
+	imeTest( {
+		description: 'Georgian Transliteration test',
+		tests: [
+			{ input: 'vikipedia\\`', output: 'ვიკიპედია`', description: 'Georgian vikipedia with `' },
+			{ input: 'jim morisoni \\~\\~\\~\\~', output: 'ჯიმ მორისონი ~~~~', description: 'Georgian jim morisoni with Wiki Signature' },
+			{ input: 'abcdefghijklmnopqrstuvwxyz', output: 'აბცდეფგჰიჯკლმნოპქრსტუვწხყზ', description: 'a-z in Georgian' },
+			{ input: 'WRTSJZC`~', output: 'ჭღთშჟძჩ„“', description: 'WRTSJZC`~ in Georgian' }
+		],
+		inputmethod: 'ka-transliteration',
+		$input: $( '<input>' ).attr( { id: 'ka', type: 'text' } )
+	} );
+
+
+	// TODO: enhance.
+	imeTest( {
+		description: 'Sanskrit transliteration test',
+		tests: [
+			{ input: '\\~', output: '~', description: 'Sanskrit transliteration - \\~ -> ~' }
+		],
+		inputmethod: 'sa-transliteration',
+		$input: $( '<input>' ).attr( { id: 'sa', type: 'text' } )
+	} );
+
+	// TODO: enhance.
+	imeTest( {
+		description: 'Oriya transliteration test',
+		tests: [
+			{ input: '\\~', output: '~', description: 'Oriya transliteration - \\~ -> ~' }
+		],
+		inputmethod: 'or-transliteration',
+		$input: $( '<input>' ).attr( { id: 'or', type: 'text' } )
+	} );
+
+	imeTest( {
+		description: 'Oriya InScript test',
+		tests: [{ input: 'ka', output: 'କୋ' }],
+		inputmethod: 'or-inscript',
+		$input: $( '<input>' ).attr( { id: 'or-inscript', type: 'text' } )
+	} );
+
+	imeTest( {
+		description: 'Malayalam InScript test',
+		tests: [{ input: 'ka', output: 'കോ' }],
+		inputmethod: 'ml-inscript',
+		$input: $( '<input>' ).attr( { id: 'ml-inscript', type: 'text' } )
+	} );
+
+	imeTest( {
+		description: 'Tamil Transliteration test',
+		tests: [
+			//(ks|KS)h should give non-conjunct form of ksh க்‌ஷ் (with ZWNJ)
+			//(ks|KS)H should give the conjunct form க்ஷ் (with ZWNJ)
+			{ input: 'thikshith', output: 'திக்‌ஷித்', description: 'thikshith in Tamil transliteration for திக்‌ஷித் non conjunct form' }, // (with ZWNJ)
+			{ input: 'thikShith', output: 'திக்‌ஷித்', description: 'thikShith in Tamil transliteration for திக்‌ஷித் non conjunct form' }, // (with ZWNJ)
+			{ input: 'thiksHith', output: 'திக்ஷித்', description: 'thiksHith in Tamil transliteration for திக்ஷித் conjunct form' },
+			{ input: 'thiKSHith', output: 'திக்ஷித்', description: 'thiKSHith in Tamil transliteration for திக்ஷித் conjunct form' },
+			{ input: 'Sri', output: 'ஸ்ரீ', description: 'Sri in Tamil transliteration for ஸ்ரீ Sri' },
+			{ input: 'Sruthi', output: 'ஸ்ருதி', description: 'Sruthi in Tamil transliteration for ஸ்ருதி' },
+			{ input: 'Sreeyaa', output: 'ஸ்ரேயா', description: 'Sreeyaa in Tamil transliteration for ஸ்ரேயா' }
+		],
+		inputmethod: 'ta-transliteration',
+		$input: $( '<input>' ).attr( { id: 'ta', type: 'text' } )
+	} );
+
+	imeTest( {
+		description: 'Tamil 99 test',
+		tests: [
+			//hfW should give non-conjunct form of ksha க்‌ஷ (with ZWNJ)
+			//T still gives the conjunct form க்ஷ
+			{ input: 'lshfWslf', output: 'திக்‌ஷித்', description: 'lshfWslf in Tamil99 for திக்‌ஷித் non conjunct form' }, // (with ZWNJ)
+			{ input: 'lsTslf', output: 'திக்ஷித்', description: 'lsTslf in Tamil99 for திக்ஷித் conjunct form' },
+			{ input: 'hfWtkakf', output: 'க்‌ஷேமம்', description: 'hfWtkakf in Tamil99 for க்‌ஷேமம் hfW -> க்‌ஷ non conjunct form' }, // (with ZWNJ)
+			{ input: 'Ttkakf', output: 'க்ஷேமம்', description: 'Ttkakf in Tamil99 for க்ஷேமம் T -> க்ஷ conjunct form' }
+		],
+		inputmethod: 'ta-99',
+		$input: $( '<input>' ).attr( { id: 'ta-99', type: 'text' } )
+	} );
+
+	imeTest( {
+		description: 'Tamil InScript test',
+		tests: [
+			{ input: 'ka', output: 'கோ', description: 'Tamil Inscript கோ' },
+			{ input: 'lfkd)<fld', output: 'திக்‌ஷித்', description: 'Tamil Inscript திக்‌ஷித் non conjunct form with ZWNJ in between' }, // (with ZWNJ)
+			{ input: 'lf&fld', output: 'திக்ஷித்', description: 'Tamil Inscript திக்ஷித் conjunct form' },
+			{ input: ';sjVd', output: 'சேரன்', description: 'Tamil Inscript சேரன் Cheran' },
+			{ input: ';aBVd', output: 'சோழன்', description: 'Tamil Inscript சோழன் Chozhan' },
+			{ input: '/gbjepd', output: 'யுவராஜ்', description: 'Tamil Inscript யுவராஜ் Yuvaraj' },
+			{ input: 'heCd\'f/jd', output: 'பாண்டியர்', description: 'Tamil Inscript பாண்டியர் Pandiyar' },
+			{ input: 'Ecrjd', output: 'ஆமீர்', description: 'Tamil Inscript ஆமீர் Aamir' },
+			{ input: 'Duj`Vf', output: 'அஹரொனி', description: 'Tamil Inscript அஹரொனி Aharoni' },
+			{ input: 'md)jrkevdld', output: 'ஸ்‌ரீகாந்த்', description: 'Tamil Inscript ஸ்‌ரீகாந்த் with ZWNJ between ஸ் and ரீ Srikanth' }, // (with ZWNJ)
+			{ input: 'mdjrkevdld', output: 'ஸ்ரீகாந்த்', description: 'Tamil Inscript ஸ்ரீகாந்த் with SHRI = SA+RII' },
+			{ input: 'MdjrjcC', output: 'ஶ்ரீரமண', description: 'Tamil Inscript ஶ்ரீரமண Shriramana with SHRI = SHA+RII' },
+			{ input: 'Dnanfle', output: 'அலோலிதா', description: 'Tamil Inscript அலோலிதா Alolitha' },
+			{ input: '<jdce', output: 'ஷர்மா', description: 'Tamil Inscript ஷர்மா Sharma' },
+			{ input: 'hfjbrVd', output: 'பிரவீன்', description: 'Tamil Inscript பிரவீன் Pravin' },
+			{ input: ';vdla<d', output: 'சந்தோஷ்', description: 'Tamil Inscript சந்தோஷ் Santhosh' },
+			{ input: 'vfkdnmd', output: 'நிக்லஸ்', description: 'Tamil Inscript நிக்லஸ் Niklas' },
+			{ input: ';rhdjCd\'g', output: 'சீப்ரண்டு', description: 'Tamil Inscript சீப்ரண்டு Siebrand' },
+			{ input: 'hzUdkNtjg', output: 'பெங்களூரு', description: 'Tamil Inscript பெங்களூரு Bengalooru' },
+			{ input: ';qje\'d\'fj', output: 'சௌராட்டிர', description: 'Tamil Inscript சௌராட்டிர Saurattira' }
+		],
+		inputmethod: 'ta-inscript',
+		$input: $( '<input>' ).attr( { id: 'ta-inscript', type: 'text' } )
+	} );
+
+	imeTest ( {
+		description: 'Amharic Transliteration test',
+		tests: [
+			{ input: 'k', output: 'ክ', description: 'Amharic k -> ክ' },
+			{ input: 'N', output: 'ኝ', description: 'Amharic N -> ኝ' },
+			{ input: 'neNu', output: 'ነኙ', description: 'Amharic neNu -> ነኙ' },
+			{ input: 'Nu', output: 'ኙ', description: 'Amharic Nu -> ኙ' },
+			{ input: 'cika', output: 'ቺካ', description: 'Amharic cika -> ቺካ' },
+			{ input: '<<', output: '«', description: 'Amharic << -> «' },
+			{ input: 'vee', output: 'ቬ', description: 'Amharic vee -> ቬ' },
+			{ input: 'vE', output: 'ቬ', description: 'Amharic vE -> ቬ' },
+			{ input: 'Vee', output: 'ቬ', description: 'Amharic Vee -> ቬ' },
+			{ input: 'VE::', output: 'ቬ።', description: 'Amharic VE:: -> ቬ።' },
+			{ input: 'to', output: 'ቶ', description: 'Amharic to -> ቶ' },
+			{ input: 'dW', output: 'ዷ', description: 'Amharic dW -> ዷ' },
+			{ input: 'ss', output: 'ሥ', description: 'Amharic ss -> ሥ' },
+			{ input: 'gWi', output: 'ጒ', description: 'Amharic gWi -> ጒ' },
+			{ input: 'hhW', output: 'ኋ', description: 'Amharic hhW -> ኋ' },
+			{ input: 'FY', output: 'ፚ', description: 'Amharic FY -> ፚ' },
+			{ input: '5', output: '፭', description: 'Amharic 5 -> ፭' },
+			{ input: '60', output: '፷', description: 'Amharic 60 -> ፷' },
+			{ input: '3005', output: '፫፻፭', description: 'Amharic 3005 -> ፫፻፭' },
+			{ input: 'aa.m.', output: 'ዓ.ም.', description: 'Amharic aa.m. -> ዓ.ም.' },
+			{ input: 'ea', output: 'ኧ', description: 'Amharic ea -> ኧ' }
+		],
+		inputmethod: 'am-transliteration',
+		$input: $( '<input>' ).attr( { id: 'am', type: 'text' } )
+	} );
+
+	imeTest ( {
+		description: 'Marathi Transliteration test',
+		tests: [
+			{ input: '\\~', output: '~', description: 'Marathi transliteration - \\~ -> ~' },
+			{ input: 'dny', output: 'ज्ञ्', description: 'dny for ज्ञ् in Marathi transliteration' },
+			{ input: 'kOM', output: 'काँ', description: 'kOM for काँ (काँग्रेस) in Marathi transliteration' },
+			// bug 38238
+			{ input: 'AUM', output: 'ॐ', description: 'AUM - ॐ (OM)' },
+			{ input: 'oMkaara', output: 'ओंकार', description: 'oMkaara (testing correct typing of oM as a simple anusvara)' }
+		],
+		inputmethod: 'mr-transliteration',
+		$input: $( '<input>' ).attr( { id: 'mr', type: 'text' } )
+	} );
+
+	imeTest ( {
+		description : 'Kannada Transliteration test',
+		tests: [
+			{ input: 'd~ha', output: 'ದ್ಹ', description: 'd~ha for ದ್ಹ in Kannada transliteration' },
+			{ input: 'W', output: 'ಔ', description: 'W for ಔ in Kannada transliteration' },
+			{ input: 'Y', output: 'ಐ', description: 'Y for ಐ in Kannada transliteration' },
+			{ input: 'Yeso', output: 'ಐಎಸೊ', description: 'Yeso for ಐಎಸೊ in Kannada transliteration' },
+			{ input: 'nAkYdu', output: 'ನಾಕೈದು', description: 'nAkYdu for ನಾಕೈದು in Kannada transliteration' },
+			{ input: 'gautam', output: 'ಗೌತಮ್', description: 'gautam for ಗೌತಮ್ in Kannada transliteration' },
+			{ input: 'nAkaidu', output: 'ನಾಕೈದು', description: 'nAkaidu for ನಾಕೈದು in Kannada transliteration' },
+			{ input: 'gWtam', output: 'ಗೌತಮ್', description: 'gWtam for ಗೌತಮ್ in Kannada transliteration' },
+			{ input: 'WShadhi', output: 'ಔಷಧಿ', description: 'WShadhi for ಔಷಧಿ in Kannada transliteration' },
+			{ input: 'auShadhi', output: 'ಔಷಧಿ', description: 'auShadhi for ಔಷಧಿ in Kannada transliteration' },
+			{ input: 'Ydu', output: 'ಐದು', description: 'Ydu for ಐದು in Kannada transliteration' },
+			{ input: 'kY', output: 'ಕೈ', description: 'kY for ಕೈ in Kannada transliteration' },
+			{ input: 'kW', output: 'ಕೌ', description: 'kW for ಐದು in Kannada transliteration' }
+		],
+		inputmethod: 'kn-transliteration',
+		$input: $( '<input>' ).attr( {id: 'kn', type: 'text' } )
+	} );
+
+=======
+>>>>>>> wikimedia/master
 	imeTest( {
 		description: 'German Transliteration and keybuffer test',
 		tests: [
@@ -336,7 +672,11 @@
 			{ input: [ [ '-', false ] ], output: '-', description: 'Hebrew regular -' },
 			{ input: [ [ '-', true ] ], output: '־', description: 'Hebrew extended -' }
 		],
+<<<<<<< HEAD
 		inputmethod: 'he-standard-2011-extonly',
+=======
+		inputmethod: 'he-standard-2012-extonly',
+>>>>>>> wikimedia/master
 		$input: $( '<input>' ).attr( { id: 'he-standard-2011-extonly', type: 'text' } )
 	} );
 

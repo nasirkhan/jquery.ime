@@ -161,6 +161,10 @@
 			this.active = !this.active;
 		},
 
+		getIM: function () {
+			return this.inputmethod;
+		},
+
 		setIM: function ( inputmethodId ) {
 			this.inputmethod = $.ime.inputmethods[inputmethodId];
 			$.ime.preferences.setIM( inputmethodId );
@@ -171,7 +175,8 @@
 		},
 
 		load: function ( name, callback ) {
-			var ime = this, dependency;
+			var ime = this,
+				dependency;
 
 			if ( $.ime.inputmethods[name] ) {
 				if ( callback ) {
@@ -181,7 +186,7 @@
 				return true;
 			}
 
-			dependency =  $.ime.sources[name].depends;
+			dependency = $.ime.sources[name].depends;
 			if ( dependency ) {
 				this.load( dependency ) ;
 			}
@@ -208,7 +213,8 @@
 				options = typeof option === 'object' && option;
 
 			if ( !data ) {
-				$this.data( 'ime', ( data = new IME( this, options ) ) );
+				data = new IME( this, options );
+				$this.data( 'ime', data );
 			}
 
 			if ( typeof option === 'string' ) {

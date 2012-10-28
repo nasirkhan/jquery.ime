@@ -15,7 +15,14 @@
 			if ( !this.registry.previousLanguages ) {
 				this.registry.previousLanguages = [];
 			}
+<<<<<<< HEAD
 			this.registry.previousLanguages.push( language );
+=======
+			//Add to the previous languages, but avoid duplicates.
+			if ( $.inArray( language, this.registry.previousLanguages ) === -1 ) {
+				this.registry.previousLanguages.push( language );
+			}
+>>>>>>> wikimedia/master
 		},
 
 		getLanguage: function () {
